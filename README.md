@@ -21,9 +21,9 @@ Which operational and geographic factors most strongly predict the governance ca
 | Member | Role |
 |--------|------|
 | Van Hoi Dang | Data Acquisition Lead |
-| Rudraksh Patel | Preprocessing Specialist |
+| Rochak Bhusal | Preprocessing Specialist |
 | Harsh Rastogi | Analysis Lead |
-| Rochak Bhusal | Visualisation & Reporting Lead |
+| Rudraksh Patel | Visualisation & Reporting Lead |
 
 ---
 
