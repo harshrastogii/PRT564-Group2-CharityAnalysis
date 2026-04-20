@@ -3,35 +3,47 @@
 
 import pandas as pd
 
-df = pd.read_csv("acnc_merged.csv", dtype=str, low_memory=False)
+df = pd.read_csv("acnc_merged.csv", low_memory=False)
 
-df["Number_of_Responsible_Persons"] = pd.to_numeric(
-    df["Number_of_Responsible_Persons"], errors="coerce"
-)
+target = "Number_of_Responsible_Persons"
 
 print(f"Rows before cleaning: {len(df):,}")
-print(f"\n[TARGET — before cleaning]")
-print(df["Number_of_Responsible_Persons"].describe().round(2).to_string())
 
 # Drop 1 — zeros (data entry errors)
-n_zeros = (df["Number_of_Responsible_Persons"] == 0).sum()
-df = df[df["Number_of_Responsible_Persons"] != 0]
+n_zeros = (df[target] == 0).sum()
+df = df[df[target] > 0].copy()
 print(f"\n[DROP 1 — Zero responsible persons]")
 print(f"  Removed   : {n_zeros:,}")
 print(f"  Remaining : {len(df):,}")
 
-# Drop 2 — top 1% outliers (> 15)
-n_outliers = (df["Number_of_Responsible_Persons"] > 15).sum()
-df = df[df["Number_of_Responsible_Persons"] <= 15]
-print(f"\n[DROP 2 — Outliers > 15]")
+# Drop 2 — top 1% outliers using quantile (exact logic from notebook)
+q99 = df[target].quantile(0.99)
+print(f"\n  99th percentile (q99) : {q99}")
+n_outliers = (df[target] > q99).sum()
+df = df[df[target] <= q99].copy()
+print(f"\n[DROP 2 — Outliers above 99th percentile]")
+print(f"  Threshold : {q99}")
 print(f"  Removed   : {n_outliers:,}")
 print(f"  Remaining : {len(df):,}")
 
-df.to_csv("acnc_merged.csv", index=False)
-print(f"\n  Saved → acnc_merged.csv")
+# Drop 3 — missing Charity_Size
+n_missing = df["Size_Encoded"].isna().sum()
+df = df.dropna(subset=["Size_Encoded"]).copy()
+print(f"\n[DROP 3 — Missing Size_Encoded]")
+print(f"  Removed   : {n_missing:,}")
+print(f"  Remaining : {len(df):,}")
+
+print(f"\n[TARGET — after cleaning]")
+print(f"  Mean  : {df[target].mean():.2f}")
+print(f"  Std   : {df[target].std():.2f}")
+print(f"  Range : {df[target].min():.0f} - {df[target].max():.0f}")
+
+df.to_csv("acnc_final.csv", index=False)
+print(f"\n  Saved → acnc_final.csv")
 
 audit_log = [
-    {"step": "Step 7 — Target cleaned", "rows": len(df), "note": f"Removed {n_zeros:,} zeros + {n_outliers:,} outliers (>15)"},
+    {"step": "Final Step — Target cleaned + Size dropped", "rows": len(df),
+     "note": f"Removed {n_zeros:,} zeros + {n_outliers:,} outliers (q99={q99}) + {n_missing:,} missing Size"},
 ]
 
 print(f"\n[AUDIT LOG]")

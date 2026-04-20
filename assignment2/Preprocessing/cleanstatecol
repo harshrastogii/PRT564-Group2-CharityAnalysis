@@ -9,27 +9,25 @@ print(f"Rows before cleaning: {len(df):,}")
 
 state_map = {
     "NSW": "NSW", "nsw": "NSW",
-    "VIC": "VIC", "Vic": "VIC", "vic": "VIC", "VICTORIA & NSW": "VIC",
+    "VIC": "VIC", "Vic": "VIC", "vic": "VIC",
     "QLD": "QLD", "Qld": "QLD", "qld": "QLD",
-    "WA": "WA",   "Wa": "WA",   "wa": "WA",   "DC Western Australia": "WA",
+    "WA": "WA",   "Wa": "WA",   "wa": "WA",
     "SA": "SA",
     "TAS": "TAS", "Tas": "TAS",
-    "ACT": "ACT", "Australia Capital Territory": "ACT",
+    "ACT": "ACT",
     "NT": "NT",
-    "Bali": None,
-    "Mentone": None,
-    "Australia Indian Ocean Territories": None,
 }
 
-df["State"] = df["State"].map(state_map)
+# .str.strip() removes leading/trailing whitespace before mapping
+df["State_Clean"] = df["State"].str.strip().map(state_map)
 
-valid = df["State"].notna().sum()
-null  = df["State"].isna().sum()
+valid = df["State_Clean"].notna().sum()
+null  = df["State_Clean"].isna().sum()
 
 print(f"Valid state records : {valid:,}")
 print(f"Null (unmappable)   : {null:,}")
 print(f"\nState value counts:")
-print(df["State"].value_counts(dropna=False).to_string())
+print(df["State_Clean"].value_counts(dropna=False).to_string())
 
 df.to_csv("acnc_merged.csv", index=False)
 print(f"\n  Saved → acnc_merged.csv")
