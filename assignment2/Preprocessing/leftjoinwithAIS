@@ -1,0 +1,67 @@
+# Merge ACNC Register with 2023 AIS on ABN (left join)
+# Van Hoi (Hendrick) Dang
+
+import pandas as pd
+
+# Load both datasets
+df_register = pd.read_csv("acnc_register.csv", dtype=str, low_memory=False)
+df_ais      = pd.read_csv("2023_AIS_data.csv", dtype=str, low_memory=False)
+
+# Standardise AIS column names to uppercase
+df_ais.columns = df_ais.columns.str.upper().str.strip()
+
+# Strip whitespace from ABN in both
+df_register["ABN"] = df_register["ABN"].str.strip()
+df_ais["ABN"]      = df_ais["ABN"].str.strip()
+
+# Select AIS columns to bring in
+ais_keep = [
+    "ABN",
+    "TOTAL REVENUE",
+    "TOTAL EXPENSES",
+    "NET ASSETS/LIABILITIES",
+    "STAFF - FULL TIME",
+    "STAFF - PART TIME",
+    "STAFF - CASUAL",
+    "TOTAL FULL TIME EQUIVALENT STAFF",
+    "STAFF - VOLUNTEERS",
+    "REVENUE FROM GOVERNMENT",
+    "DONATIONS AND BEQUESTS",
+]
+
+df_ais_subset = df_ais[ais_keep]
+
+# Left join — keep all 65,114 Register rows
+df_merged = pd.merge(
+    df_register,
+    df_ais_subset,
+    on="ABN",
+    how="left"
+)
+
+# Post-merge checks
+print(f"[POST-MERGE RESULT]")
+print(f"  Merged shape : {df_merged.shape[0]:,} rows | {df_merged.shape[1]} cols")
+
+assert df_merged.shape[0] == df_register.shape[0], \
+    "ERROR: Row count changed — check for duplicate ABNs in AIS!"
+print(f"  Row count check : PASSED")
+
+enriched = df_merged["TOTAL REVENUE"].notna().sum()
+missing  = df_merged["TOTAL REVENUE"].isna().sum()
+print(f"\n  Rows WITH AIS financial data    : {enriched:,} ({enriched/len(df_merged)*100:.1f}%)")
+print(f"  Rows WITHOUT AIS financial data : {missing:,} ({missing/len(df_merged)*100:.1f}%)")
+print(f"  (NaN = no AIS return or Basic Religious Charity exemption)")
+
+# Save
+df_merged.to_csv("acnc_merged.csv", index=False)
+print(f"\n  Saved → acnc_merged.csv")
+
+# Audit log
+audit_log = [
+       {"step": "Step 3 — Left join", "rows": len(df_merged),   "note": f"Merged AIS on ABN — {enriched:,} rows enriched, {missing:,} NaN"},
+]
+
+print(f"\n[AUDIT LOG]")
+for entry in audit_log:
+    print(f"  {entry['step']}: {entry['rows']:,} rows | {entry['note']}")

@@ -1,0 +1,26 @@
+# Drop missing Charity_Size — final modelling sample
+# Van Hoi (Hendrick) Dang
+
+import pandas as pd
+
+df = pd.read_csv("acnc_merged.csv", dtype=str, low_memory=False)
+
+print(f"Rows before Size drop: {len(df):,}")
+
+n_missing = df["Charity_Size"].isna().sum()
+df = df[df["Charity_Size"].notna()]
+
+print(f"\n[DROP — Missing Charity_Size]")
+print(f"  Removed   : {n_missing:,}")
+print(f"  Remaining : {len(df):,}")
+
+df.to_csv("acnc_final.csv", index=False)
+print(f"\n  Saved → acnc_final.csv")
+
+audit_log = [
+    {"step": "Step 8 — Drop missing Size", "rows": len(df), "note": f"Removed {n_missing:,} missing Charity_Size → final modelling sample"},
+]
+
+print(f"\n[AUDIT LOG]")
+for entry in audit_log:
+    print(f"  {entry['step']}: {entry['rows']:,} rows | {entry['note']}")

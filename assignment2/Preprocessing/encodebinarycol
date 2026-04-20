@@ -1,0 +1,28 @@
+# Encode binary columns (Y/blank → 1/0)
+# Van Hoi (Hendrick) Dang
+
+import pandas as pd
+
+df = pd.read_csv("acnc_merged.csv", dtype=str, low_memory=False)
+
+binary_cols = [
+    col for col in df.columns
+    if df[col].dropna().isin(["Y", ""]).all()
+    and df[col].notna().any()
+]
+
+print(f"Binary columns found: {len(binary_cols)}")
+
+for col in binary_cols:
+    df[col] = df[col].apply(lambda x: 1 if x == "Y" else 0)
+
+df.to_csv("acnc_merged.csv", index=False)
+print(f"Saved → acnc_merged.csv")
+
+audit_log = [
+    {"step": "Step 5 — Binary encoded", "rows": len(df), "note": f"{len(binary_cols)} columns Y/blank → 1/0"},
+]
+
+print(f"\n[AUDIT LOG]")
+for entry in audit_log:
+    print(f"  {entry['step']}: {entry['rows']:,} rows | {entry['note']}")

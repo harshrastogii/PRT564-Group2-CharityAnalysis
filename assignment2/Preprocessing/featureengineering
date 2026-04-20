@@ -1,0 +1,47 @@
+# Feature engineering — create derived columns
+# Van Hoi (Hendrick) Dang
+
+import pandas as pd
+
+df = pd.read_csv("acnc_merged.csv", dtype=str, low_memory=False)
+
+# Convert target to numeric
+df["Number_of_Responsible_Persons"] = pd.to_numeric(
+    df["Number_of_Responsible_Persons"], errors="coerce"
+)
+
+# Identify column groups
+state_op_cols    = [c for c in df.columns if any(
+                    s in c for s in ["_ACT","_NSW","_NT","_QLD","_SA","_TAS","_VIC","_WA"])]
+purpose_cols     = [c for c in df.columns if "Advancing" in c or "Purpose" in c]
+beneficiary_cols = [c for c in df.columns if "Bene" in c or "beneficiar" in c.lower()]
+
+# Convert to numeric for summing
+for col in state_op_cols + purpose_cols + beneficiary_cols:
+    df[col] = pd.to_numeric(df[col], errors="coerce")
+
+# Feature 1 — Num_States_Operated
+df["Num_States_Operated"] = df[state_op_cols].sum(axis=1)
+
+# Feature 2 — Num_Purposes
+df["Num_Purposes"] = df[purpose_cols].sum(axis=1)
+
+# Feature 3 — Num_Beneficiaries
+df["Num_Beneficiaries"] = df[beneficiary_cols].sum(axis=1)
+
+# Feature 4 — Is_NT
+df["Is_NT"] = (df["State"] == "NT").astype(int)
+
+# Feature 5 — Size_Encoded
+df["Size_Encoded"] = df["Charity_Size"].map({"Small": 1, "Medium": 2, "Large": 3})
+
+df.to_csv("acnc_merged.csv", index=False)
+print(f"Saved → acnc_merged.csv")
+
+audit_log = [
+    {"step": "Step 6 — Feature engineering", "rows": len(df), "note": "5 new features: Num_States_Operated, Num_Purposes, Num_Beneficiaries, Is_NT, Size_Encoded"},
+]
+
+print(f"\n[AUDIT LOG]")
+for entry in audit_log:
+    print(f"  {entry['step']}: {entry['rows']:,} rows | {entry['note']}")

@@ -1,0 +1,39 @@
+# Clean the target variable — Number_of_Responsible_Persons
+# Van Hoi (Hendrick) Dang
+
+import pandas as pd
+
+df = pd.read_csv("acnc_merged.csv", dtype=str, low_memory=False)
+
+df["Number_of_Responsible_Persons"] = pd.to_numeric(
+    df["Number_of_Responsible_Persons"], errors="coerce"
+)
+
+print(f"Rows before cleaning: {len(df):,}")
+print(f"\n[TARGET — before cleaning]")
+print(df["Number_of_Responsible_Persons"].describe().round(2).to_string())
+
+# Drop 1 — zeros (data entry errors)
+n_zeros = (df["Number_of_Responsible_Persons"] == 0).sum()
+df = df[df["Number_of_Responsible_Persons"] != 0]
+print(f"\n[DROP 1 — Zero responsible persons]")
+print(f"  Removed   : {n_zeros:,}")
+print(f"  Remaining : {len(df):,}")
+
+# Drop 2 — top 1% outliers (> 15)
+n_outliers = (df["Number_of_Responsible_Persons"] > 15).sum()
+df = df[df["Number_of_Responsible_Persons"] <= 15]
+print(f"\n[DROP 2 — Outliers > 15]")
+print(f"  Removed   : {n_outliers:,}")
+print(f"  Remaining : {len(df):,}")
+
+df.to_csv("acnc_merged.csv", index=False)
+print(f"\n  Saved → acnc_merged.csv")
+
+audit_log = [
+    {"step": "Step 7 — Target cleaned", "rows": len(df), "note": f"Removed {n_zeros:,} zeros + {n_outliers:,} outliers (>15)"},
+]
+
+print(f"\n[AUDIT LOG]")
+for entry in audit_log:
+    print(f"  {entry['step']}: {entry['rows']:,} rows | {entry['note']}")

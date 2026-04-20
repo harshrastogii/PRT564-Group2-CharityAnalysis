@@ -1,0 +1,12 @@
+# Load and profile ACNC Charity Register (no AIS merge)
+# Van Hoi (Hendrick) Dang
+
+import pandas as pd
+
+df = pd.read_csv("acnc_register.csv", dtype=str, low_memory=False)
+
+print(f"Shape: {df.shape[0]:,} rows | {df.shape[1]} cols")
+print(f"\nMissing in Charity_Size: {df['Charity_Size'].isna().sum():,}")
+print(f"Missing in State: {df['State'].isna().sum():,}")
+print(f"\nState raw value counts:")
+print(df["State"].value_counts(dropna=False).to_string())

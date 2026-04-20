@@ -1,0 +1,43 @@
+# Clean the State column
+# Van Hoi (Hendrick) Dang
+
+import pandas as pd
+
+df = pd.read_csv("acnc_merged.csv", dtype=str, low_memory=False)
+
+print(f"Rows before cleaning: {len(df):,}")
+
+state_map = {
+    "NSW": "NSW", "nsw": "NSW",
+    "VIC": "VIC", "Vic": "VIC", "vic": "VIC", "VICTORIA & NSW": "VIC",
+    "QLD": "QLD", "Qld": "QLD", "qld": "QLD",
+    "WA": "WA",   "Wa": "WA",   "wa": "WA",   "DC Western Australia": "WA",
+    "SA": "SA",
+    "TAS": "TAS", "Tas": "TAS",
+    "ACT": "ACT", "Australia Capital Territory": "ACT",
+    "NT": "NT",
+    "Bali": None,
+    "Mentone": None,
+    "Australia Indian Ocean Territories": None,
+}
+
+df["State"] = df["State"].map(state_map)
+
+valid = df["State"].notna().sum()
+null  = df["State"].isna().sum()
+
+print(f"Valid state records : {valid:,}")
+print(f"Null (unmappable)   : {null:,}")
+print(f"\nState value counts:")
+print(df["State"].value_counts(dropna=False).to_string())
+
+df.to_csv("acnc_merged.csv", index=False)
+print(f"\n  Saved → acnc_merged.csv")
+
+audit_log = [
+    {"step": "Step 4 — State cleaned", "rows": len(df), "note": f"{valid:,} valid state records, {null:,} NaN"},
+]
+
+print(f"\n[AUDIT LOG]")
+for entry in audit_log:
+    print(f"  {entry['step']}: {entry['rows']:,} rows | {entry['note']}")
